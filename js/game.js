@@ -12,8 +12,8 @@ const ANIMATION_SPEED = 4; // Update frame every X game loops (lower is faster)
 
 // --- Asset Loading ---
 const animations = {
-    idle: { frames: [], frameCount: 18, path: 'game_assets/Fallen_Angel_1/PNG Sequences/Idle/0_Fallen_Angels_Idle_' },
-    walking: { frames: [], frameCount: 24, path: 'game_assets/Fallen_Angel_1/PNG Sequences/Walking/0_Fallen_Angels_Walking_' }
+    idle: { frames: [], frameCount: 18, path: 'game_assets/player/idle/0_Fallen_Angels_Idle_' },
+    walking: { frames: [], frameCount: 24, path: 'game_assets/player/walking/0_Fallen_Angels_Walking_' }
     // Add other animations (attacking, jumping, etc.) here later
 };
 let assetsLoaded = 0;
