@@ -272,27 +272,22 @@ function update() {
 // --- Render Function ---
 function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     // Draw ground
-    ctx.fillStyle = '#228B22'; 
+    ctx.fillStyle = '#228B22';
     ctx.fillRect(ground.x, ground.y, ground.width, ground.height);
-
-    // --- Player Drawing --- 
+    // --- Player Drawing ---
     const currentAnimationData = animations[player.currentAnim];
     let currentFrameImage = null;
-    
     // Determine the Y position for drawing based on mode
     // In edit mode, we adjust the visual position based on editOffsetY
     // The actual collision box remains determined by PLAYER_FEET_OFFSET_Y
     const visualFeetY = player.y + player.height - (isEditMode ? editOffsetY : PLAYER_FEET_OFFSET_Y);
     const drawPlayerY = visualFeetY - player.height;
-
     // Get the current frame image
     if (currentAnimationData && currentAnimationData.frames && currentAnimationData.frames.length > player.frame) {
         currentFrameImage = currentAnimationData.frames[player.frame];
     }
-
-    // Draw the sprite if valid
+    // Draw the sprite if valid and loaded
     if (currentFrameImage && currentFrameImage.complete && currentFrameImage.naturalHeight !== 0) { 
         ctx.save();
         let drawX = player.x;
@@ -303,18 +298,20 @@ function render() {
         ctx.drawImage(currentFrameImage, drawX, drawPlayerY, player.width, player.height);
         ctx.restore();
     } else {
-        // Fallback rectangle drawing if needed
-        ctx.fillStyle = '#FF0000';
-        ctx.fillRect(player.x, drawPlayerY, player.width, player.height);
+        // Fallback rectangle drawing if initial frame not ready or invalid
+        if (player.currentAnim === 'idle' && player.frame === 0) {
+             // Don't draw red box if it's just the initial idle frame loading
+        } else {
+             ctx.fillStyle = '#FF0000';
+             ctx.fillRect(player.x, drawPlayerY, player.width, player.height); 
+        }
     }
-
-    // --- Edit Mode Overlay --- 
+    // --- Edit Mode Overlay ---
     if (isEditMode) {
         // Draw player collision box (using actual player x/y)
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; // Semi-transparent white
         ctx.lineWidth = 1;
         ctx.strokeRect(player.x, player.y, player.width, player.height);
-
         // Draw Edit Mode text
         ctx.fillStyle = 'white';
         ctx.font = '16px Arial';
@@ -322,30 +319,47 @@ function render() {
         ctx.fillText(`EDIT MODE (Press E to Exit)`, 10, 20);
         ctx.fillText(`Feet Offset Y: ${editOffsetY} (Use Up/Down Arrows)`, 10, 40);
     }
-
-    // --- Action Controls Overlay ---
-    ctx.save();
-    ctx.globalAlpha = 0.8;
-    ctx.fillStyle = '#222';
-    ctx.fillRect(10, canvas.height - 200, 220, 180);
-    ctx.globalAlpha = 1.0;
-    ctx.fillStyle = 'white';
-    ctx.font = '16px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText('Action Controls:', 20, canvas.height - 180);
-    let y = canvas.height - 160;
-    for (const key in actionKeys) {
-        ctx.fillText(`${key}: ${actionKeys[key].label}`, 30, y);
-        y += 20;
-    }
-    ctx.restore();
+    // --- REMOVED Action Controls Overlay from canvas ---
 }
 
 // --- Start Game ---
 function startGame() {
     console.log("Starting game loop...");
+    populateControlsPanel(); // Populate the HTML controls panel
     gameRunning = true;
     requestAnimationFrame(gameLoop);
+}
+
+// --- Populate Controls Panel (New Function) ---
+function populateControlsPanel() {
+    const controlsList = document.getElementById('controls-list');
+    if (!controlsList) return;
+
+    // Clear existing items
+    controlsList.innerHTML = '';
+
+    // Add basic movement info
+    const moveLi = document.createElement('li');
+    moveLi.textContent = `←/→: Move`;
+    controlsList.appendChild(moveLi);
+    const runLi = document.createElement('li');
+    runLi.textContent = `Shift + ←/→: Run`;
+    controlsList.appendChild(runLi);
+    const jumpLi = document.createElement('li');
+    jumpLi.textContent = `Z: Jump`;
+    controlsList.appendChild(jumpLi);
+
+    // Add separator
+    const sepLi = document.createElement('li');
+    sepLi.innerHTML = `<hr style="border-color: #666;">`;
+    controlsList.appendChild(sepLi);
+
+    // Add action keys
+    for (const key in actionKeys) {
+        const li = document.createElement('li');
+        li.textContent = `${key}: ${actionKeys[key].label}`;
+        controlsList.appendChild(li);
+    }
 }
 
 // Load assets first, then start the game

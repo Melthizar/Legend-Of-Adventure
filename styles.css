@@ -11,4 +11,38 @@ body {
 canvas {
     border: 1px solid black;
     background-color: #87CEEB; /* Sky blue */
+}
+
+.game-container {
+    display: flex;
+    align-items: flex-start; /* Align items to the top */
+    gap: 20px; /* Space between canvas and controls */
+}
+
+#controls-panel {
+    background-color: #444;
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #555;
+    min-width: 200px; /* Ensure it has some width */
+    max-height: 600px; /* Match canvas height */
+    overflow-y: auto; /* Add scroll if content overflows */
+}
+
+#controls-panel h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #666;
+    padding-bottom: 5px;
+}
+
+#controls-panel ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#controls-panel li {
+    margin-bottom: 5px;
+    font-family: monospace; /* Make it look like code */
 } 
