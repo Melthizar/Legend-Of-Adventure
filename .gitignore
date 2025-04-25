@@ -1,0 +1,12 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Original downloaded assets (ignore)
+assets/
+
+# Node Modules (if used later)
+node_modules/
+
+# Log files
+*.log 
