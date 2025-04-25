@@ -9,6 +9,7 @@ const ctx = canvas.getContext('2d');
 const GRAVITY = 0.5;
 const PLAYER_SPEED = 3; // Adjusted speed slightly for sprites
 const ANIMATION_SPEED = 4; // Update frame every X game loops (lower is faster)
+const PLAYER_FEET_OFFSET_Y = 15; // Approx. pixels from bottom of sprite box to feet. ADJUST THIS VALUE!
 
 // --- Asset Loading ---
 const animations = {
@@ -52,7 +53,8 @@ function loadAssets() {
 // --- Player Object ---
 const player = {
     x: 100,
-    y: canvas.height - 150, // Start closer to ground
+    // Adjust starting Y based on ground and offset, start a bit above ground
+    y: canvas.height - 150 - PLAYER_FEET_OFFSET_Y, 
     // Guessing sprite dimensions - ADJUST IF NEEDED!
     width: 100, 
     height: 100, 
@@ -128,8 +130,9 @@ function update() {
 
     // Ground collision
     player.onGround = false;
-    if (player.y + player.height > ground.y) {
-        player.y = ground.y - player.height;
+    if (player.y + player.height - PLAYER_FEET_OFFSET_Y > ground.y) { // Check based on estimated feet position
+        // Place player so estimated feet are on the ground
+        player.y = ground.y - (player.height - PLAYER_FEET_OFFSET_Y);
         player.dy = 0;
         player.onGround = true;
     }
