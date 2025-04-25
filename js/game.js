@@ -8,6 +8,8 @@ const ctx = canvas.getContext('2d');
 // --- Game Constants ---
 const GRAVITY = 0.5;
 const PLAYER_SPEED = 3; // Adjusted speed slightly for sprites
+const JUMP_STRENGTH = 10; // How high the player jumps (negative dy)
+const AIR_CONTROL_FACTOR = 0.8; // How much control player has in air (0-1)
 const ANIMATION_SPEED = 4; // Update frame every X game loops (lower is faster)
 let PLAYER_FEET_OFFSET_Y = 25; // Approx. pixels from bottom of sprite box to feet. ADJUST THIS VALUE! (Increased from 15)
 
@@ -79,6 +81,8 @@ const player = {
     dx: 0,
     dy: 0,
     onGround: false,
+    isJumping: false, // Track if jump action is initiated
+    isAttacking: false, // Track if any attack/action is active
     // Animation state
     currentAnim: 'idle',
     frame: 0,
@@ -107,32 +111,54 @@ const keys = {
 
 // --- Action Key Bindings ---
 const actionKeys = {
-    Z: { anim: 'jumping', label: 'Jump' },
-    S: { anim: 'sliding', label: 'Slide' },
-    T: { anim: 'throwing', label: 'Throw' },
-    G: { anim: 'throwingAir', label: 'Air Throw' },
-    A: { anim: 'slashing', label: 'Slash' },
-    Q: { anim: 'slashingAir', label: 'Air Slash' },
-    W: { anim: 'runSlashing', label: 'Run Slash' },
-    E: { anim: 'runThrowing', label: 'Run Throw' },
-    C: { anim: 'kicking', label: 'Kick' },
-    H: { anim: 'hurt', label: 'Hurt' },
-    K: { anim: 'dying', label: 'Die' }
+    // Z is handled separately for jump physics
+    S: { anim: 'sliding', label: 'Slide', groundOnly: true },
+    T: { anim: 'throwing', label: 'Throw', groundOnly: true },
+    G: { anim: 'throwingAir', label: 'Air Throw', groundOnly: false },
+    A: { anim: 'slashing', label: 'Slash', groundOnly: true },
+    Q: { anim: 'slashingAir', label: 'Air Slash', groundOnly: false },
+    W: { anim: 'runSlashing', label: 'Run Slash', groundOnly: true }, // Assumes running implies ground
+    E: { anim: 'runThrowing', label: 'Run Throw', groundOnly: true }, // Assumes running implies ground
+    C: { anim: 'kicking', label: 'Kick', groundOnly: true },
+    H: { anim: 'hurt', label: 'Hurt', groundOnly: false }, // Can be hurt anytime
+    K: { anim: 'dying', label: 'Die', groundOnly: false } // Can die anytime
 };
-let actionKeyActive = null; // Track which action is currently active
+let currentAction = null; // Track the animation key of the current action
+let actionFrameCount = 0; // How many frames the current action has played
 
 // --- Event Listeners ---
 document.addEventListener('keydown', (e) => {
     const key = e.key.toUpperCase();
-    if (actionKeys[key]) {
-        // Interrupt any current action with the new one
-        player.currentAnim = actionKeys[key].anim;
+
+    // Handle Jump Separately
+    if (key === 'Z' && player.onGround && !player.isJumping && !player.isAttacking) {
+        player.dy = -JUMP_STRENGTH;
+        player.onGround = false;
+        player.isJumping = true; // Mark that jump has started
+        player.currentAnim = 'jumping'; // Start jump animation
         player.frame = 0;
         player.frameTimer = 0;
-        actionKeyActive = key;
+        currentAction = null; // Ensure jump interrupts other potential states if needed
         e.preventDefault();
         return;
     }
+
+    // Handle Other Actions
+    if (actionKeys[key] && !player.isAttacking) {
+        const action = actionKeys[key];
+        // Check if action is allowed (ground vs air)
+        if ((action.groundOnly && player.onGround) || !action.groundOnly) {
+            player.currentAnim = action.anim;
+            player.frame = 0;
+            player.frameTimer = 0;
+            player.isAttacking = true; // Mark action as started
+            currentAction = action.anim; // Store the animation name
+            actionFrameCount = 0;
+            e.preventDefault();
+            return; // Action takes priority for this frame
+        }
+    }
+
     if (e.key === 'e' || e.key === 'E') { // Toggle Edit Mode
         isEditMode = !isEditMode;
         if (isEditMode) {
@@ -140,14 +166,11 @@ document.addEventListener('keydown', (e) => {
             console.log(`Entered Edit Mode. Adjust OffsetY with Up/Down Arrows. Current: ${editOffsetY}`);
         } else {
             console.log("Exited Edit Mode.");
-            // Optional: Update the constant in the code if you want?
-            // For now, user manually copies value from console.
-            // PLAYER_FEET_OFFSET_Y = editOffsetY;
         }
-        keys['e'] = true; // Track key state if needed
-        e.preventDefault(); // Prevent default browser action for 'e'
+        keys['e'] = true;
+        e.preventDefault();
     } else if (isEditMode) { // Handle edit mode input
-        if (e.key === 'ArrowUp') {
+         if (e.key === 'ArrowUp') {
             editOffsetY++;
             console.log(`Edit OffsetY: ${editOffsetY}`);
             keys['ArrowUp'] = true;
@@ -160,16 +183,11 @@ document.addEventListener('keydown', (e) => {
         }
     } else if (keys.hasOwnProperty(e.key)) { // Handle regular game input
         keys[e.key] = true;
-        // Optional: Prevent default for arrow keys during gameplay if needed
-        // if (e.key.startsWith('Arrow')) e.preventDefault(); 
     }
 });
 
 document.addEventListener('keyup', (e) => {
-    const key = e.key.toUpperCase();
-    if (actionKeys[key] && actionKeyActive === key) {
-        actionKeyActive = null;
-    }
+    // No change needed for action key up yet, actions play out fully
     if (keys.hasOwnProperty(e.key)) {
         keys[e.key] = false;
     }
@@ -186,87 +204,151 @@ function gameLoop() {
 
 // --- Update Function ---
 function update() {
-    // Only run game logic if not in edit mode
-    if (!isEditMode) {
-        // If an action key is active, play its animation and allow interruption
-        if (actionKeyActive) {
-            // Advance animation frame
-            player.frameTimer++;
-            const currentAnimationData = animations[player.currentAnim];
-            if (player.frameTimer >= ANIMATION_SPEED) {
-                player.frameTimer = 0;
-                player.frame = (player.frame + 1) % currentAnimationData.frameCount;
-            }
-            // Do not update movement or switch to idle/walking/running while action is active
-            return;
-        }
-        // Apply gravity
-        player.dy += GRAVITY;
+    if (isEditMode) return; // No updates in edit mode
 
-        // Handle horizontal movement
-        player.dx = 0;
-        let isMoving = false;
-        let isRunning = false;
-        if (keys.ArrowLeft) {
-            player.dx = -PLAYER_SPEED;
-            player.flipH = true; // Face left
-            isMoving = true;
-        }
-        if (keys.ArrowRight) {
-            player.dx = PLAYER_SPEED;
-            player.flipH = false; // Face right
-            isMoving = true;
-        }
-        if ((keys.ArrowLeft || keys.ArrowRight) && (keys.Shift || keys.shift)) {
-            // Running if Shift is held
-            player.dx *= 2;
-            isRunning = true;
-        }
+    // 1. Apply Gravity
+    player.dy += GRAVITY;
 
-        // Update position
-        player.x += player.dx;
-        player.y += player.dy;
+    // 2. Handle Horizontal Movement Input
+    let targetDx = 0;
+    let isMoving = false;
+    let isRunning = false;
+    if (keys.ArrowLeft) {
+        targetDx = -PLAYER_SPEED;
+        player.flipH = true;
+        isMoving = true;
+    }
+    if (keys.ArrowRight) {
+        targetDx = PLAYER_SPEED;
+        player.flipH = false;
+        isMoving = true;
+    }
+    if (isMoving && (keys.Shift || keys.shift)) {
+        targetDx *= 2;
+        isRunning = true;
+    }
 
-        // Ground collision - Uses the *original* PLAYER_FEET_OFFSET_Y
+    // Apply air control factor
+    player.dx = player.onGround ? targetDx : targetDx * AIR_CONTROL_FACTOR;
+
+    // 3. Update Position
+    player.x += player.dx;
+    player.y += player.dy;
+
+    // 4. Ground Collision
+    let landedThisFrame = false;
+    if (!player.onGround && player.y + player.height - PLAYER_FEET_OFFSET_Y >= ground.y && player.dy > 0) {
+        player.y = ground.y - (player.height - PLAYER_FEET_OFFSET_Y);
+        player.dy = 0;
+        player.onGround = true;
+        player.isJumping = false; // Landed
+        landedThisFrame = true;
+    } else if (player.y + player.height - PLAYER_FEET_OFFSET_Y < ground.y) {
         player.onGround = false;
-        if (player.y + player.height - PLAYER_FEET_OFFSET_Y > ground.y) { 
-            player.y = ground.y - (player.height - PLAYER_FEET_OFFSET_Y);
-            player.dy = 0;
-            player.onGround = true;
-        }
+    }
 
-        // Update Animation State
-        if (isRunning && player.onGround) {
-            player.currentAnim = 'running';
-        } else if (isMoving && player.onGround) {
-            player.currentAnim = 'walking';
-        } else if (!player.onGround && player.dy < 0) {
-            player.currentAnim = 'jumpLoop';
-        } else if (!player.onGround && player.dy > 0) {
-            player.currentAnim = 'falling';
-        } else if (!isMoving && player.onGround) {
-            player.currentAnim = 'idle';
-        } 
-        
-        // Update Animation Frame
+    // 5. Update Action State & Animation Frame
+    let nextAnim = player.currentAnim;
+    if (player.isAttacking) {
+        actionFrameCount++;
+        const currentAnimationData = animations[currentAction]; // Use stored action anim
+        // Advance frame
         player.frameTimer++;
-        const currentAnimationData = animations[player.currentAnim];
         if (player.frameTimer >= ANIMATION_SPEED) {
             player.frameTimer = 0;
-            if (player.frame >= currentAnimationData.frameCount) {
-                player.frame = 0; 
+            player.frame++;
+        }
+        // Check if animation finished
+        if (player.frame >= currentAnimationData.frameCount) {
+            player.isAttacking = false;
+            currentAction = null;
+            player.frame = 0; // Reset frame for next anim
+            // Don't set nextAnim here, let physics logic below handle it
+        } else {
+             nextAnim = currentAction; // Continue playing action
+        }
+    }
+
+    // 6. Determine Base Animation State (if not attacking)
+    if (!player.isAttacking) {
+        if (player.onGround) {
+            if (landedThisFrame) {
+                 // Decide between idle/walking/running upon landing
+                 if (isRunning) nextAnim = 'running';
+                 else if (isMoving) nextAnim = 'walking';
+                 else nextAnim = 'idle';
+            } else if (isRunning) {
+                nextAnim = 'running';
+            } else if (isMoving) {
+                nextAnim = 'walking';
+            } else {
+                // Check if previous was idleBlinking, continue if so, otherwise idle
+                if (player.currentAnim === 'idleBlinking') {
+                    // Let idleBlinking finish its cycle if it started
+                    const animData = animations.idleBlinking;
+                     player.frameTimer++;
+                     if(player.frameTimer >= ANIMATION_SPEED) {
+                         player.frameTimer = 0;
+                         player.frame = (player.frame + 1) % animData.frameCount;
+                         if (player.frame === 0) { // Finished cycle
+                              nextAnim = 'idle'; // Switch back to normal idle
+                         } else {
+                              nextAnim = 'idleBlinking'; // Continue blinking
+                         }
+                     } else {
+                          nextAnim = 'idleBlinking'; // Continue blinking
+                     }
+                } else {
+                     nextAnim = 'idle';
+                     // Add chance to start blinking?
+                     if (Math.random() < 0.005) { // Small chance each frame
+                          nextAnim = 'idleBlinking';
+                          player.frame = 0;
+                          player.frameTimer = 0;
+                     }
+                }
             }
-            player.frame = (player.frame + 1) % currentAnimationData.frameCount;
+        } else { // In Air
+            if (player.currentAnim === 'jumping' && player.dy >= 0) {
+                // Finished initial jump anim, now falling
+                nextAnim = 'falling';
+            } else if (player.dy < 0 && player.currentAnim !== 'jumping') {
+                // Still rising after jump or air action
+                nextAnim = 'jumpLoop';
+            } else if (player.dy > 0) {
+                // Is falling
+                nextAnim = 'falling';
+            }
+             // Keep jumpLoop or falling if no other condition met in air
+             // Note: Air attacks handled by isAttacking logic
         }
 
-        // Keep player within bounds (horizontal)
-        if (player.x < 0) {
-            player.x = 0;
+        // 7. Update Animation Frame (if not attacking or handled by idleBlinking)
+        if (nextAnim !== 'idleBlinking') {
+            if (player.currentAnim !== nextAnim) {
+                // Animation changed, reset frame
+                player.currentAnim = nextAnim;
+                player.frame = 0;
+                player.frameTimer = 0;
+            } else {
+                // Continue current animation
+                player.frameTimer++;
+                if (player.frameTimer >= ANIMATION_SPEED) {
+                    player.frameTimer = 0;
+                    const animData = animations[player.currentAnim];
+                    player.frame = (player.frame + 1) % animData.frameCount;
+                }
+            }
         }
-        if (player.x + player.width > canvas.width) {
-            player.x = canvas.width - player.width;
-        }
-    } // End of if(!isEditMode)
+    }
+
+    // 8. Keep player within bounds (horizontal)
+    if (player.x < 0) {
+        player.x = 0;
+    }
+    if (player.x + player.width > canvas.width) {
+        player.x = canvas.width - player.width;
+    }
 }
 
 // --- Render Function ---
