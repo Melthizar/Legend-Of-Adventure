@@ -235,15 +235,26 @@ function update() {
     player.x += player.dx;
     player.y += player.dy;
 
-    // 4. Ground Collision
+    // 4. Ground Collision Check & Resolution
     let landedThisFrame = false;
-    if (!player.onGround && player.y + player.height - PLAYER_FEET_OFFSET_Y >= ground.y && player.dy > 0) {
-        player.y = ground.y - (player.height - PLAYER_FEET_OFFSET_Y);
-        player.dy = 0;
-        player.onGround = true;
-        player.isJumping = false; // Landed
-        landedThisFrame = true;
-    } else if (player.y + player.height - PLAYER_FEET_OFFSET_Y < ground.y) {
+    const playerFeetY = player.y + player.height - PLAYER_FEET_OFFSET_Y;
+
+    // Check if player feet are at or below ground level
+    if (playerFeetY >= ground.y) {
+        // Check if the player was previously above ground or is currently moving downwards
+        if (!player.onGround || player.dy > 0) {
+            // Collision occurred this frame (landing or moving down into ground)
+            player.y = ground.y - (player.height - PLAYER_FEET_OFFSET_Y); // Snap to ground
+            player.dy = 0; // Stop vertical movement
+            if (!player.onGround) landedThisFrame = true; // Mark landing if previously airborne
+            player.onGround = true;
+            player.isJumping = false;
+        } else {
+             // Player was already on ground and remains on ground, ensure onGround is true
+             player.onGround = true; 
+        }
+    } else {
+        // Player is definitely above ground
         player.onGround = false;
     }
 
