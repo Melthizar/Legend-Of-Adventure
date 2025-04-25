@@ -17,23 +17,23 @@ let editOffsetY = PLAYER_FEET_OFFSET_Y; // Start edit offset matching the curren
 
 // --- Asset Loading ---
 const animations = {
-    idle: { frames: [], frameCount: 18, path: 'game_assets/player/Idle/0_Fallen_Angels_Idle_' },
-    walking: { frames: [], frameCount: 24, path: 'game_assets/player/Walking/0_Fallen_Angels_Walking_' },
-    running: { frames: [], frameCount: 12, path: 'game_assets/player/Running/0_Fallen_Angels_Running_' },
-    jumping: { frames: [], frameCount: 6, path: 'game_assets/player/Jump Start/0_Fallen_Angels_Jump Start_' },
-    jumpLoop: { frames: [], frameCount: 6, path: 'game_assets/player/Jump Loop/0_Fallen_Angels_Jump Loop_' },
-    falling: { frames: [], frameCount: 6, path: 'game_assets/player/Falling Down/0_Fallen_Angels_Falling Down_' },
-    dying: { frames: [], frameCount: 15, path: 'game_assets/player/Dying/0_Fallen_Angels_Dying_' },
-    hurt: { frames: [], frameCount: 12, path: 'game_assets/player/Hurt/0_Fallen_Angels_Hurt_' },
-    sliding: { frames: [], frameCount: 6, path: 'game_assets/player/Sliding/0_Fallen_Angels_Sliding_' },
-    throwing: { frames: [], frameCount: 12, path: 'game_assets/player/Throwing/0_Fallen_Angels_Throwing_' },
-    throwingAir: { frames: [], frameCount: 12, path: 'game_assets/player/Throwing in The Air/0_Fallen_Angels_Throwing in The Air_' },
-    slashing: { frames: [], frameCount: 12, path: 'game_assets/player/Slashing/0_Fallen_Angels_Slashing_' },
-    slashingAir: { frames: [], frameCount: 12, path: 'game_assets/player/Slashing in The Air/0_Fallen_Angels_Slashing in The Air_' },
-    runSlashing: { frames: [], frameCount: 12, path: 'game_assets/player/Run Slashing/0_Fallen_Angels_Run Slashing_' },
-    runThrowing: { frames: [], frameCount: 12, path: 'game_assets/player/Run Throwing/0_Fallen_Angels_Run Throwing_' },
-    kicking: { frames: [], frameCount: 12, path: 'game_assets/player/Kicking/0_Fallen_Angels_Kicking_' },
-    idleBlinking: { frames: [], frameCount: 18, path: 'game_assets/player/Idle Blinking/0_Fallen_Angels_Idle Blinking_' }
+    idle: { frames: [], frameCount: 18, path: 'game_assets/player/idle/0_Fallen_Angels_Idle_' },
+    walking: { frames: [], frameCount: 24, path: 'game_assets/player/walking/0_Fallen_Angels_Walking_' },
+    running: { frames: [], frameCount: 12, path: 'game_assets/player/running/0_Fallen_Angels_Running_' },
+    jumping: { frames: [], frameCount: 6, path: 'game_assets/player/jump_start/0_Fallen_Angels_Jump Start_' },
+    jumpLoop: { frames: [], frameCount: 6, path: 'game_assets/player/jump_loop/0_Fallen_Angels_Jump Loop_' },
+    falling: { frames: [], frameCount: 6, path: 'game_assets/player/falling_down/0_Fallen_Angels_Falling Down_' },
+    dying: { frames: [], frameCount: 15, path: 'game_assets/player/dying/0_Fallen_Angels_Dying_' },
+    hurt: { frames: [], frameCount: 12, path: 'game_assets/player/hurt/0_Fallen_Angels_Hurt_' },
+    sliding: { frames: [], frameCount: 6, path: 'game_assets/player/sliding/0_Fallen_Angels_Sliding_' },
+    throwing: { frames: [], frameCount: 12, path: 'game_assets/player/throwing/0_Fallen_Angels_Throwing_' },
+    throwingAir: { frames: [], frameCount: 12, path: 'game_assets/player/throwing_in_the_air/0_Fallen_Angels_Throwing in The Air_' },
+    slashing: { frames: [], frameCount: 12, path: 'game_assets/player/slashing/0_Fallen_Angels_Slashing_' },
+    slashingAir: { frames: [], frameCount: 12, path: 'game_assets/player/slashing_in_the_air/0_Fallen_Angels_Slashing in The Air_' },
+    runSlashing: { frames: [], frameCount: 12, path: 'game_assets/player/run_slashing/0_Fallen_Angels_Run Slashing_' },
+    runThrowing: { frames: [], frameCount: 12, path: 'game_assets/player/run_throwing/0_Fallen_Angels_Run Throwing_' },
+    kicking: { frames: [], frameCount: 12, path: 'game_assets/player/kicking/0_Fallen_Angels_Kicking_' },
+    idleBlinking: { frames: [], frameCount: 18, path: 'game_assets/player/idle_blinking/0_Fallen_Angels_Idle Blinking_' }
 };
 let assetsLoaded = 0;
 let totalAssets = 0;
