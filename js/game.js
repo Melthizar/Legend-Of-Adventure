@@ -9,7 +9,11 @@ const ctx = canvas.getContext('2d');
 const GRAVITY = 0.5;
 const PLAYER_SPEED = 3; // Adjusted speed slightly for sprites
 const ANIMATION_SPEED = 4; // Update frame every X game loops (lower is faster)
-const PLAYER_FEET_OFFSET_Y = 25; // Approx. pixels from bottom of sprite box to feet. ADJUST THIS VALUE! (Increased from 15)
+let PLAYER_FEET_OFFSET_Y = 25; // Approx. pixels from bottom of sprite box to feet. ADJUST THIS VALUE! (Increased from 15)
+
+// Edit Mode Variables
+let isEditMode = false;
+let editOffsetY = PLAYER_FEET_OFFSET_Y; // Start edit offset matching the current config
 
 // --- Asset Loading ---
 const animations = {
@@ -53,7 +57,7 @@ function loadAssets() {
 // --- Player Object ---
 const player = {
     x: 100,
-    // Adjust starting Y based on ground and offset, start a bit above ground
+    // Keep initial Y calculation using the *original* constant
     y: canvas.height - 150 - PLAYER_FEET_OFFSET_Y, 
     // Guessing sprite dimensions - ADJUST IF NEEDED!
     width: 100, 
@@ -80,13 +84,42 @@ const ground = {
 const keys = {
     ArrowLeft: false,
     ArrowRight: false,
-    ArrowUp: false // Add jump key later
+    ArrowUp: false,
+    ArrowDown: false, // Add Down Arrow for edit mode
+    e: false // Add E key for toggling edit mode
 };
 
 // --- Event Listeners ---
 document.addEventListener('keydown', (e) => {
-    if (keys.hasOwnProperty(e.key)) {
+    if (e.key === 'e' || e.key === 'E') { // Toggle Edit Mode
+        isEditMode = !isEditMode;
+        if (isEditMode) {
+            editOffsetY = PLAYER_FEET_OFFSET_Y; // Reset edit offset when entering mode
+            console.log(`Entered Edit Mode. Adjust OffsetY with Up/Down Arrows. Current: ${editOffsetY}`);
+        } else {
+            console.log("Exited Edit Mode.");
+            // Optional: Update the constant in the code if you want?
+            // For now, user manually copies value from console.
+            // PLAYER_FEET_OFFSET_Y = editOffsetY;
+        }
+        keys['e'] = true; // Track key state if needed
+        e.preventDefault(); // Prevent default browser action for 'e'
+    } else if (isEditMode) { // Handle edit mode input
+        if (e.key === 'ArrowUp') {
+            editOffsetY++;
+            console.log(`Edit OffsetY: ${editOffsetY}`);
+            keys['ArrowUp'] = true;
+            e.preventDefault();
+        } else if (e.key === 'ArrowDown') {
+            editOffsetY--;
+            console.log(`Edit OffsetY: ${editOffsetY}`);
+            keys['ArrowDown'] = true;
+            e.preventDefault();
+        }
+    } else if (keys.hasOwnProperty(e.key)) { // Handle regular game input
         keys[e.key] = true;
+        // Optional: Prevent default for arrow keys during gameplay if needed
+        // if (e.key.startsWith('Arrow')) e.preventDefault(); 
     }
 });
 
@@ -107,58 +140,64 @@ function gameLoop() {
 
 // --- Update Function ---
 function update() {
-    // Apply gravity
-    player.dy += GRAVITY;
+    // Only run game logic if not in edit mode
+    if (!isEditMode) { 
+        // Apply gravity
+        player.dy += GRAVITY;
 
-    // Handle horizontal movement
-    player.dx = 0;
-    let isMoving = false;
-    if (keys.ArrowLeft) {
-        player.dx = -PLAYER_SPEED;
-        player.flipH = true; // Face left
-        isMoving = true;
-    }
-    if (keys.ArrowRight) {
-        player.dx = PLAYER_SPEED;
-        player.flipH = false; // Face right
-        isMoving = true;
-    }
+        // Handle horizontal movement
+        player.dx = 0;
+        let isMoving = false;
+        if (keys.ArrowLeft) {
+            player.dx = -PLAYER_SPEED;
+            player.flipH = true; // Face left
+            isMoving = true;
+        }
+        if (keys.ArrowRight) {
+            player.dx = PLAYER_SPEED;
+            player.flipH = false; // Face right
+            isMoving = true;
+        }
 
-    // Update position
-    player.x += player.dx;
-    player.y += player.dy;
+        // Update position
+        player.x += player.dx;
+        player.y += player.dy;
 
-    // Ground collision
-    player.onGround = false;
-    if (player.y + player.height - PLAYER_FEET_OFFSET_Y > ground.y) { // Check based on estimated feet position
-        // Place player so estimated feet are on the ground
-        player.y = ground.y - (player.height - PLAYER_FEET_OFFSET_Y);
-        player.dy = 0;
-        player.onGround = true;
-    }
+        // Ground collision - Uses the *original* PLAYER_FEET_OFFSET_Y
+        player.onGround = false;
+        if (player.y + player.height - PLAYER_FEET_OFFSET_Y > ground.y) { 
+            player.y = ground.y - (player.height - PLAYER_FEET_OFFSET_Y);
+            player.dy = 0;
+            player.onGround = true;
+        }
 
-    // Update Animation State
-    if (isMoving && player.onGround) {
-        player.currentAnim = 'walking';
-    } else if (!isMoving && player.onGround) {
-        player.currentAnim = 'idle';
-    } // Add jumping/falling animations later
-    
-    // Update Animation Frame
-    player.frameTimer++;
-    if (player.frameTimer >= ANIMATION_SPEED) {
-        player.frameTimer = 0;
-        const currentAnimationData = animations[player.currentAnim];
-        player.frame = (player.frame + 1) % currentAnimationData.frameCount;
-    }
+        // Update Animation State
+        if (isMoving && player.onGround) {
+            player.currentAnim = 'walking';
+        } else if (!isMoving && player.onGround) {
+            player.currentAnim = 'idle';
+        } 
+        
+        // Update Animation Frame
+        player.frameTimer++;
+        if (player.frameTimer >= ANIMATION_SPEED) {
+            player.frameTimer = 0;
+            const currentAnimationData = animations[player.currentAnim];
+            // Ensure frame index is valid after potential anim switch
+            if (player.frame >= currentAnimationData.frameCount) {
+                player.frame = 0; 
+            }
+            player.frame = (player.frame + 1) % currentAnimationData.frameCount;
+        }
 
-    // Keep player within bounds (horizontal)
-    if (player.x < 0) {
-        player.x = 0;
-    }
-    if (player.x + player.width > canvas.width) {
-        player.x = canvas.width - player.width;
-    }
+        // Keep player within bounds (horizontal)
+        if (player.x < 0) {
+            player.x = 0;
+        }
+        if (player.x + player.width > canvas.width) {
+            player.x = canvas.width - player.width;
+        }
+    } // End of if(!isEditMode)
 }
 
 // --- Render Function ---
@@ -169,40 +208,50 @@ function render() {
     ctx.fillStyle = '#228B22'; 
     ctx.fillRect(ground.x, ground.y, ground.width, ground.height);
 
-    // Draw player sprite
+    // --- Player Drawing --- 
     const currentAnimationData = animations[player.currentAnim];
     let currentFrameImage = null;
+    
+    // Determine the Y position for drawing based on mode
+    // In edit mode, we adjust the visual position based on editOffsetY
+    // The actual collision box remains determined by PLAYER_FEET_OFFSET_Y
+    const visualFeetY = player.y + player.height - (isEditMode ? editOffsetY : PLAYER_FEET_OFFSET_Y);
+    const drawPlayerY = visualFeetY - player.height;
 
-    // Check if animation data and frames array exist and frame index is valid
+    // Get the current frame image
     if (currentAnimationData && currentAnimationData.frames && currentAnimationData.frames.length > player.frame) {
         currentFrameImage = currentAnimationData.frames[player.frame];
     }
 
-    // Check if the specific frame image is loaded and valid
-    // (Checking complete ignores potential errors during load, but prevents crashes)
+    // Draw the sprite if valid
     if (currentFrameImage && currentFrameImage.complete && currentFrameImage.naturalHeight !== 0) { 
         ctx.save();
-        
         let drawX = player.x;
         if (player.flipH) {
             ctx.scale(-1, 1);
             drawX = -(player.x + player.width);
         }
-        
-        ctx.drawImage(
-            currentFrameImage, 
-            drawX,
-            player.y, 
-            player.width, 
-            player.height
-        );
-        
+        ctx.drawImage(currentFrameImage, drawX, drawPlayerY, player.width, player.height);
         ctx.restore();
     } else {
-        // Fallback: Draw red rectangle if image not loaded/valid or animation data missing
-        // console.warn(`Rendering fallback for anim: ${player.currentAnim}, frame: ${player.frame}`); // Optional: for debugging
+        // Fallback rectangle drawing if needed
         ctx.fillStyle = '#FF0000';
-        ctx.fillRect(player.x, player.y, player.width, player.height);
+        ctx.fillRect(player.x, drawPlayerY, player.width, player.height);
+    }
+
+    // --- Edit Mode Overlay --- 
+    if (isEditMode) {
+        // Draw player collision box (using actual player x/y)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; // Semi-transparent white
+        ctx.lineWidth = 1;
+        ctx.strokeRect(player.x, player.y, player.width, player.height);
+
+        // Draw Edit Mode text
+        ctx.fillStyle = 'white';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(`EDIT MODE (Press E to Exit)`, 10, 20);
+        ctx.fillText(`Feet Offset Y: ${editOffsetY} (Use Up/Down Arrows)`, 10, 40);
     }
 }
 
