@@ -9,7 +9,7 @@ const ctx = canvas.getContext('2d');
 const GRAVITY = 0.5;
 const PLAYER_SPEED = 3; // Adjusted speed slightly for sprites
 const ANIMATION_SPEED = 4; // Update frame every X game loops (lower is faster)
-const PLAYER_FEET_OFFSET_Y = 15; // Approx. pixels from bottom of sprite box to feet. ADJUST THIS VALUE!
+const PLAYER_FEET_OFFSET_Y = 25; // Approx. pixels from bottom of sprite box to feet. ADJUST THIS VALUE! (Increased from 15)
 
 // --- Asset Loading ---
 const animations = {
@@ -171,32 +171,36 @@ function render() {
 
     // Draw player sprite
     const currentAnimationData = animations[player.currentAnim];
-    const currentFrameImage = currentAnimationData.frames[player.frame];
+    let currentFrameImage = null;
 
-    if (currentFrameImage) { // Make sure image is loaded
-        ctx.save(); // Save context state
+    // Check if animation data and frames array exist and frame index is valid
+    if (currentAnimationData && currentAnimationData.frames && currentAnimationData.frames.length > player.frame) {
+        currentFrameImage = currentAnimationData.frames[player.frame];
+    }
+
+    // Check if the specific frame image is loaded and valid
+    // (Checking complete ignores potential errors during load, but prevents crashes)
+    if (currentFrameImage && currentFrameImage.complete && currentFrameImage.naturalHeight !== 0) { 
+        ctx.save();
         
         let drawX = player.x;
         if (player.flipH) {
-            // Flip the context horizontally
             ctx.scale(-1, 1);
-            // Adjust draw X position for flipped context
-            // Multiply by -1 because the coordinate system is now flipped
-            drawX = -(player.x + player.width); 
+            drawX = -(player.x + player.width);
         }
         
-        // Draw the image
         ctx.drawImage(
             currentFrameImage, 
-            drawX, // Use adjusted X if flipped
+            drawX,
             player.y, 
             player.width, 
             player.height
         );
         
-        ctx.restore(); // Restore context state (removes flip)
+        ctx.restore();
     } else {
-        // Fallback: Draw red rectangle if image not loaded
+        // Fallback: Draw red rectangle if image not loaded/valid or animation data missing
+        // console.warn(`Rendering fallback for anim: ${player.currentAnim}, frame: ${player.frame}`); // Optional: for debugging
         ctx.fillStyle = '#FF0000';
         ctx.fillRect(player.x, player.y, player.width, player.height);
     }
