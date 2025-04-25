@@ -17,9 +17,23 @@ let editOffsetY = PLAYER_FEET_OFFSET_Y; // Start edit offset matching the curren
 
 // --- Asset Loading ---
 const animations = {
-    idle: { frames: [], frameCount: 18, path: 'game_assets/player/idle/0_Fallen_Angels_Idle_' },
-    walking: { frames: [], frameCount: 24, path: 'game_assets/player/walking/0_Fallen_Angels_Walking_' }
-    // Add other animations (attacking, jumping, etc.) here later
+    idle: { frames: [], frameCount: 18, path: 'game_assets/player/Idle/0_Fallen_Angels_Idle_' },
+    walking: { frames: [], frameCount: 24, path: 'game_assets/player/Walking/0_Fallen_Angels_Walking_' },
+    running: { frames: [], frameCount: 12, path: 'game_assets/player/Running/0_Fallen_Angels_Running_' },
+    jumping: { frames: [], frameCount: 6, path: 'game_assets/player/Jump Start/0_Fallen_Angels_Jump Start_' },
+    jumpLoop: { frames: [], frameCount: 6, path: 'game_assets/player/Jump Loop/0_Fallen_Angels_Jump Loop_' },
+    falling: { frames: [], frameCount: 6, path: 'game_assets/player/Falling Down/0_Fallen_Angels_Falling Down_' },
+    dying: { frames: [], frameCount: 15, path: 'game_assets/player/Dying/0_Fallen_Angels_Dying_' },
+    hurt: { frames: [], frameCount: 12, path: 'game_assets/player/Hurt/0_Fallen_Angels_Hurt_' },
+    sliding: { frames: [], frameCount: 6, path: 'game_assets/player/Sliding/0_Fallen_Angels_Sliding_' },
+    throwing: { frames: [], frameCount: 12, path: 'game_assets/player/Throwing/0_Fallen_Angels_Throwing_' },
+    throwingAir: { frames: [], frameCount: 12, path: 'game_assets/player/Throwing in The Air/0_Fallen_Angels_Throwing in The Air_' },
+    slashing: { frames: [], frameCount: 12, path: 'game_assets/player/Slashing/0_Fallen_Angels_Slashing_' },
+    slashingAir: { frames: [], frameCount: 12, path: 'game_assets/player/Slashing in The Air/0_Fallen_Angels_Slashing in The Air_' },
+    runSlashing: { frames: [], frameCount: 12, path: 'game_assets/player/Run Slashing/0_Fallen_Angels_Run Slashing_' },
+    runThrowing: { frames: [], frameCount: 12, path: 'game_assets/player/Run Throwing/0_Fallen_Angels_Run Throwing_' },
+    kicking: { frames: [], frameCount: 12, path: 'game_assets/player/Kicking/0_Fallen_Angels_Kicking_' },
+    idleBlinking: { frames: [], frameCount: 18, path: 'game_assets/player/Idle Blinking/0_Fallen_Angels_Idle Blinking_' }
 };
 let assetsLoaded = 0;
 let totalAssets = 0;
@@ -49,9 +63,9 @@ function loadImageSequence(animData) {
 
 function loadAssets() {
     console.log("Loading assets...");
-    loadImageSequence(animations.idle);
-    loadImageSequence(animations.walking);
-    // Load other animation sequences here
+    for (const key in animations) {
+        loadImageSequence(animations[key]);
+    }
 }
 
 // --- Player Object ---
@@ -86,11 +100,39 @@ const keys = {
     ArrowRight: false,
     ArrowUp: false,
     ArrowDown: false, // Add Down Arrow for edit mode
-    e: false // Add E key for toggling edit mode
+    e: false, // Add E key for toggling edit mode
+    Shift: false,
+    shift: false
 };
+
+// --- Action Key Bindings ---
+const actionKeys = {
+    Z: { anim: 'jumping', label: 'Jump' },
+    S: { anim: 'sliding', label: 'Slide' },
+    T: { anim: 'throwing', label: 'Throw' },
+    G: { anim: 'throwingAir', label: 'Air Throw' },
+    A: { anim: 'slashing', label: 'Slash' },
+    Q: { anim: 'slashingAir', label: 'Air Slash' },
+    W: { anim: 'runSlashing', label: 'Run Slash' },
+    E: { anim: 'runThrowing', label: 'Run Throw' },
+    C: { anim: 'kicking', label: 'Kick' },
+    H: { anim: 'hurt', label: 'Hurt' },
+    K: { anim: 'dying', label: 'Die' }
+};
+let actionKeyActive = null; // Track which action is currently active
 
 // --- Event Listeners ---
 document.addEventListener('keydown', (e) => {
+    const key = e.key.toUpperCase();
+    if (actionKeys[key]) {
+        // Interrupt any current action with the new one
+        player.currentAnim = actionKeys[key].anim;
+        player.frame = 0;
+        player.frameTimer = 0;
+        actionKeyActive = key;
+        e.preventDefault();
+        return;
+    }
     if (e.key === 'e' || e.key === 'E') { // Toggle Edit Mode
         isEditMode = !isEditMode;
         if (isEditMode) {
@@ -124,6 +166,10 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.addEventListener('keyup', (e) => {
+    const key = e.key.toUpperCase();
+    if (actionKeys[key] && actionKeyActive === key) {
+        actionKeyActive = null;
+    }
     if (keys.hasOwnProperty(e.key)) {
         keys[e.key] = false;
     }
@@ -141,13 +187,26 @@ function gameLoop() {
 // --- Update Function ---
 function update() {
     // Only run game logic if not in edit mode
-    if (!isEditMode) { 
+    if (!isEditMode) {
+        // If an action key is active, play its animation and allow interruption
+        if (actionKeyActive) {
+            // Advance animation frame
+            player.frameTimer++;
+            const currentAnimationData = animations[player.currentAnim];
+            if (player.frameTimer >= ANIMATION_SPEED) {
+                player.frameTimer = 0;
+                player.frame = (player.frame + 1) % currentAnimationData.frameCount;
+            }
+            // Do not update movement or switch to idle/walking/running while action is active
+            return;
+        }
         // Apply gravity
         player.dy += GRAVITY;
 
         // Handle horizontal movement
         player.dx = 0;
         let isMoving = false;
+        let isRunning = false;
         if (keys.ArrowLeft) {
             player.dx = -PLAYER_SPEED;
             player.flipH = true; // Face left
@@ -157,6 +216,11 @@ function update() {
             player.dx = PLAYER_SPEED;
             player.flipH = false; // Face right
             isMoving = true;
+        }
+        if ((keys.ArrowLeft || keys.ArrowRight) && (keys.Shift || keys.shift)) {
+            // Running if Shift is held
+            player.dx *= 2;
+            isRunning = true;
         }
 
         // Update position
@@ -172,18 +236,23 @@ function update() {
         }
 
         // Update Animation State
-        if (isMoving && player.onGround) {
+        if (isRunning && player.onGround) {
+            player.currentAnim = 'running';
+        } else if (isMoving && player.onGround) {
             player.currentAnim = 'walking';
+        } else if (!player.onGround && player.dy < 0) {
+            player.currentAnim = 'jumpLoop';
+        } else if (!player.onGround && player.dy > 0) {
+            player.currentAnim = 'falling';
         } else if (!isMoving && player.onGround) {
             player.currentAnim = 'idle';
         } 
         
         // Update Animation Frame
         player.frameTimer++;
+        const currentAnimationData = animations[player.currentAnim];
         if (player.frameTimer >= ANIMATION_SPEED) {
             player.frameTimer = 0;
-            const currentAnimationData = animations[player.currentAnim];
-            // Ensure frame index is valid after potential anim switch
             if (player.frame >= currentAnimationData.frameCount) {
                 player.frame = 0; 
             }
@@ -253,6 +322,23 @@ function render() {
         ctx.fillText(`EDIT MODE (Press E to Exit)`, 10, 20);
         ctx.fillText(`Feet Offset Y: ${editOffsetY} (Use Up/Down Arrows)`, 10, 40);
     }
+
+    // --- Action Controls Overlay ---
+    ctx.save();
+    ctx.globalAlpha = 0.8;
+    ctx.fillStyle = '#222';
+    ctx.fillRect(10, canvas.height - 200, 220, 180);
+    ctx.globalAlpha = 1.0;
+    ctx.fillStyle = 'white';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('Action Controls:', 20, canvas.height - 180);
+    let y = canvas.height - 160;
+    for (const key in actionKeys) {
+        ctx.fillText(`${key}: ${actionKeys[key].label}`, 30, y);
+        y += 20;
+    }
+    ctx.restore();
 }
 
 // --- Start Game ---
