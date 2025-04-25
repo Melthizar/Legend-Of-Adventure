@@ -1,0 +1,135 @@
+/**
+ * Game configuration and constants
+ */
+const Config = {
+    // Canvas settings
+    CANVAS_WIDTH: 800,
+    CANVAS_HEIGHT: 600,
+    
+    // Game settings
+    TILE_SIZE: 32,
+    PLAYER_START_X: 400,
+    PLAYER_START_Y: 300,
+    PLAYER_SPEED: 3,
+    ENEMY_SPEED: 1.5,
+    PROJECTILE_SPEED: 3,
+    ATTACK_KEYS: [' ', 'z', 'j'],
+    
+    // Enemy Settings
+    OCTOROK_HEALTH: 2,
+    OCTOROK_SHOOT_RANGE: 200, 
+    OCTOROK_SHOOT_CHANCE: 0.005, // Probability per frame
+    OCTOROK_SHOOT_COOLDOWN: 60, // Frames
+    OCTOROK_MOVE_CHANGE_DIR_CHANCE: 0.01, // Probability per frame
+    BOSS_HEALTH: 5,
+    BOSS_SHOOT_CHANCE: 0.02, // Probability per frame
+    BOSS_SHOOT_COOLDOWN: 90, // Frames
+    BOSS_CONTACT_DAMAGE: 2,
+    BOSS_KNOCKBACK_DISTANCE: 30,
+    OCTOROK_SIZE: 24,
+    BOSS_SIZE: 40,
+    
+    // Enemy Damage/Death Effects
+    ENEMY_DAMAGE_PARTICLE_COUNT: 10,
+    ENEMY_DAMAGE_PARTICLE_COLOR: '#FF0000',
+    ENEMY_DAMAGE_PARTICLE_MIN_SPEED: -2,
+    ENEMY_DAMAGE_PARTICLE_MAX_SPEED: 2,
+    ENEMY_DAMAGE_PARTICLE_MIN_SIZE: 1,
+    ENEMY_DAMAGE_PARTICLE_MAX_SIZE: 3,
+    ENEMY_DAMAGE_PARTICLE_MIN_LIFETIME: 10, // Frames
+    ENEMY_DAMAGE_PARTICLE_MAX_LIFETIME: 20, // Frames
+    ENEMY_DEATH_PARTICLE_COUNT: 20,
+    ENEMY_DEATH_PARTICLE_COLOR: '#FF5555',
+    ENEMY_DEATH_PARTICLE_MIN_SPEED: -3,
+    ENEMY_DEATH_PARTICLE_MAX_SPEED: 3,
+    ENEMY_DEATH_PARTICLE_MIN_SIZE: 2,
+    ENEMY_DEATH_PARTICLE_MAX_SIZE: 4,
+    ENEMY_DEATH_PARTICLE_MIN_LIFETIME: 15, // Frames
+    ENEMY_DEATH_PARTICLE_MAX_LIFETIME: 30, // Frames
+    ENEMY_ITEM_DROP_CHANCE: 0.3, // Probability (0 to 1)
+    ENEMY_ITEM_RUPEE_CHANCE: 0.7, // Probability of rupee vs heart on drop
+    ENEMY_KNOCKBACK_ON_HIT_DISTANCE: 10,
+
+    // Item Values
+    ITEM_RUPEE_VALUE: 5,
+    ITEM_HEART_VALUE: 1,
+    
+    // Item Collection Effects
+    ITEM_COLLECT_PARTICLE_COUNT: 10,
+    ITEM_COLLECT_PARTICLE_MIN_SPEED: -2,
+    ITEM_COLLECT_PARTICLE_MAX_SPEED: 2,
+    ITEM_COLLECT_PARTICLE_MIN_SIZE: 1,
+    ITEM_COLLECT_PARTICLE_MAX_SIZE: 3,
+    ITEM_COLLECT_PARTICLE_MIN_LIFETIME: 10, // Frames
+    ITEM_COLLECT_PARTICLE_MAX_LIFETIME: 20, // Frames
+
+    // Entity Sizes
+    ITEM_WIDTH: 16,
+    ITEM_HEIGHT: 16,
+
+    // Player settings
+    PLAYER_MAX_HEALTH: 3,
+    PLAYER_INVULNERABLE_TIME: 60, // In frames
+    PLAYER_ATTACK_COOLDOWN: 20, // In frames
+    PLAYER_ATTACK_DURATION: 200, // In milliseconds
+    
+    // UI Settings & Messages
+    WELCOME_MESSAGE: "Find and defeat all enemies!",
+    WELCOME_MESSAGE_DURATION: 2000,
+    VICTORY_MESSAGE: "Victory! You've defeated all enemies!",
+    VICTORY_MESSAGE_DURATION: 3000,
+    VICTORY_SCREEN_DELAY: 3000,
+    UI_MESSAGE_QUEUE_DELAY: 250,
+    
+    // Particle Settings
+    ATTACK_PARTICLE_COUNT: 5,
+    ATTACK_PARTICLE_COLOR: '#FFFFFF',
+    ATTACK_PARTICLE_MIN_SPEED: -1,
+    ATTACK_PARTICLE_MAX_SPEED: 1,
+    ATTACK_PARTICLE_MIN_SIZE: 1,
+    ATTACK_PARTICLE_MAX_SIZE: 2,
+    ATTACK_PARTICLE_MIN_LIFETIME: 5, // In frames
+    ATTACK_PARTICLE_MAX_LIFETIME: 10, // In frames
+    
+    // Colors
+    COLORS: {
+        floor: '#338833',
+        wall: '#775533',
+        player: '#5599FF',
+        enemy: '#FF5555',
+        boss: '#FF0000',
+        projectile: '#FFFF00',
+        enemyProjectile: '#FF9900',
+        rupee: '#00FF00',
+        heart: '#FF3333',
+        healthBarBackground: '#333333',
+        healthBarForeground: '#FF3333',
+        bossCrown: '#FFCC00',
+        tree: '#006600'
+    },
+    
+    // Rendering
+    ENEMY_HEALTH_BAR_HEIGHT: 4,
+    ENEMY_HEALTH_BAR_OFFSET_Y: 10,
+
+    // Projectile Settings
+    PROJECTILE_WIDTH: 10,
+    PROJECTILE_HEIGHT: 10,
+    PROJECTILE_RADIUS: 5,
+    PROJECTILE_DAMAGE: 1,
+    PROJECTILE_IMPACT_PARTICLE_COUNT: 5,
+    PROJECTILE_IMPACT_PARTICLE_MIN_SPEED: -2,
+    PROJECTILE_IMPACT_PARTICLE_MAX_SPEED: 2,
+    PROJECTILE_IMPACT_PARTICLE_MIN_SIZE: 1,
+    PROJECTILE_IMPACT_PARTICLE_MAX_SIZE: 2,
+    PROJECTILE_IMPACT_PARTICLE_MIN_LIFETIME: 5, // Frames
+    PROJECTILE_IMPACT_PARTICLE_MAX_LIFETIME: 10, // Frames
+
+    // Attack Settings
+    SWORD_DAMAGE: 1,
+    SWORD_RANGE: 20,
+    SWORD_WIDTH: 6,
+    SWORD_RENDER_LENGTH: 20,
+    SWORD_RENDER_WIDTH: 6,
+    SWORD_RENDER_OFFSET: 2
+};
